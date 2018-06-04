@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data
+module Data where
+
+{-
     ( ServerState (..)
     , constructState
     , queryMoleculeById
@@ -42,3 +44,4 @@ queryMoleculeById id = do result <- head <$> queryP cypher params
 constructState :: BoltCfg -> IO ServerState
 constructState bcfg = do pool <- createPool (connect bcfg) close 4 500 1
                          return (ServerState pool)
+-}

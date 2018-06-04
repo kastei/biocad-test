@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module SimpleServer
+module SimpleServer where
+{-
     ( runServer
     ) where
 
@@ -21,3 +22,4 @@ runServer :: Port -> BoltCfg -> IO ()
 runServer port config = do state <- constructState config
                             scottyT port (`runReaderT` state) $ do
                                 middleware logStdoutDev
+-}

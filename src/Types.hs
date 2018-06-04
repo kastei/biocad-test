@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings   #-}
-
 module Types where
+{-
 
 import           Data.Aeson (ToJSON (..), object, (.=))
 import           Data.Text    (Text)
@@ -85,3 +85,4 @@ toReaction _                          = fail "Not a Reaction value"
 toCatalyst :: Monad m => Value -> m Catalyst
 toCatalyst (L [I id, T smiles, T name]) = return $ Catalyst id smiles name
 toCatalyst _                          = fail "Not a Catalyst value"
+-}
