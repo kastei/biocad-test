@@ -1,7 +1,22 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings   #-}
 module Types where
-{-
+
+
+data Molecule = Molecule 
+    { molecule_id          :: Int
+    , molecule_smiles      :: String
+    , molecule_iupacName   :: String
+    } 
+    deriving (Show, Eq)
+
+data Reaction = Reaction 
+    { reaction_id          :: Int
+    , reaction_name        :: String
+    } 
+    deriving (Show, Eq)
+
+  {-
 
 import           Data.Aeson (ToJSON (..), object, (.=))
 import           Data.Text    (Text)

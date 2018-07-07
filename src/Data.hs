@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data where
-
-{-
+module Data
     ( ServerState (..)
     , constructState
     , queryMoleculeById
@@ -18,7 +16,7 @@ import           Data.Pool                  (Pool, createPool)
 import           Data.Text                  (Text)
 import           Database.Bolt
 
-import           Type
+import           Types
 
 -- |A pool of connections to Neo4j server
 data ServerState = ServerState { pool :: Pool Pipe }
@@ -26,11 +24,13 @@ data ServerState = ServerState { pool :: Pool Pipe }
 
 -- |Returns molecule by id
 queryMoleculeById :: Text -> BoltActionT IO Molecule
-queryMoleculeById id = do result <- head <$> queryP cypher params
-                      T id <- result `at` "id"
-                      T smiles <- result `at` "smiles"
-                      T iupacName <- result `at` "iupacName"
-                      return $ Molecule id smiles iupacName
+queryMoleculeById id = do 
+    result <- head <$> queryP cypher params
+    I id <- result `at` "id"
+    T smiles <- result `at` "smiles"
+    T iupacName <- result `at` "iupacName"
+--    return $ Molecule id smiles iupacName
+    return $ Molecule 123 "smiles" "iupacName"
 
   where cypher = "MATCH (molecule:Molecule {id:{id}}) " <>
                  "RETURN molecule.id as id," <>
@@ -44,4 +44,3 @@ queryMoleculeById id = do result <- head <$> queryP cypher params
 constructState :: BoltCfg -> IO ServerState
 constructState bcfg = do pool <- createPool (connect bcfg) close 4 500 1
                          return (ServerState pool)
--}
