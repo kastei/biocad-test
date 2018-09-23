@@ -8,6 +8,7 @@ import Control.Applicative  ((<$>))
 import System.Environment   (getEnv)
 
 import Data
+
 import System.Environment
 
 import Database.Bolt
@@ -25,25 +26,17 @@ main = do
     pipe <- connect defaultConfig
     runCommand pipe command argList
     close pipe
-    
+
  
 runCommand :: Pipe -> String -> [String] -> IO()
 runCommand pipe command argList
     | command == "exit" = putStrLn "Bye!"
     | command == "e"    = putStrLn "Bye!"
-    | command == "test" = do
-        test
-        main
-    | command == "createDemo" = do 
+    | command == "createDemo" = do
             run pipe $ createDemo
             main
-    
-    | command == "createDemo1" = do 
-            run pipe $ createDemo1
-            main
-    
-    | command == "createReaction" = do 
-        if argList == [] 
+            | command == "createReaction" = do
+{-        if argList == [] 
         then putStrLn "For this request you need to enter the name of reaction, id's of reagents and products"
         else do
             let name = head argList
@@ -54,11 +47,17 @@ runCommand pipe command argList
             putStrLn $ show rIdList
             putStrLn $ show caIdList
             putStrLn $ show pIdList
+            mr <- createReaction 
+                "dehydrogenation methane" 
+                [(Molecule 0 "C" "methane", 2)]
+                [(Catalyst 0 "OP(O)(O)=O" (Just "phosphoric acid"))]
+                [Accelerate 1400 100] 
+                [(Molecule 0 "[H]" "molecular hydrogen", 3), (Molecule 0 "C#C" "acetylene", 1)] 
 
-            maybeReaction <- run pipe $ createReaction name [] [] [] []
-            case maybeReaction of 
+            case mr of 
                 Nothing         -> putStrLn $ "Error: could not insert the reaction"
                 Just reaction   -> putStrLn $ show reaction
+-}
             main
     | command == "getReactionById" = do
         if argList == [] 
@@ -78,6 +77,7 @@ doesntExist command _ =
         else do
             putStrLn $ "Command '" ++ command ++ "' doesn't exist"
             main
+
 
 parseLine :: Char -> String -> [String]
 parseLine delimiter s = foldr f [[]] s where

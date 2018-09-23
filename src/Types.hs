@@ -15,8 +15,12 @@ data Molecule = Molecule { m_id        :: Int
                          }
     deriving (Show, Eq)
    
-data Reaction = Reaction { r_id     :: Int
-                         , r_name   :: String
+data Reaction = Reaction { r_id       :: Int
+                         , r_name     :: String
+                         , reagents   :: [(Molecule, Double)]
+                         , catalysts  :: [Catalyst]
+                         , accelerate :: Maybe Accelerate
+                         , products   :: [(Molecule, Double)]
                          }
     deriving (Eq)
 
@@ -32,20 +36,20 @@ data Catalyst = Catalyst { c_id     :: Int
     deriving (Eq)
 
 instance Show Reaction where
-    show (Reaction id name) = "Reaction { id = " ++ (show id) ++", name = '" ++ name ++"' }"
+    show (Reaction id name _ _ _ _) = "Reaction { id = " ++ (show id) ++", name = '" ++ name ++"' }"
 
 toNode :: Monad m => Record -> m Node
 toNode record = record `at` "n" >>= exact
     
-instance ToJSON Reaction where
-    toJSON (Reaction i n) = object [ "id" .= i, "name" .= n]
+--instance ToJSON Reaction where
+--    toJSON (Reaction i n) = object [ "id" .= i, "name" .= n]
     
-toReaction :: Monad m => Value -> m Reaction
-toReaction r = do node :: Node <- exact r
-                  let props = nodeProps node
-                  let identity = nodeIdentity node
-                  name :: Text <- (props `at` "name") >>= exact
-                  return $ Reaction identity (unpack name)
+--toReaction :: Monad m => Value -> m Reaction
+--toReaction r = do node :: Node <- exact r
+--                  let props = nodeProps node
+--                  let identity = nodeIdentity node
+--                  name :: Text <- (props `at` "name") >>= exact
+--                  return $ Reaction identity (unpack name)
     
 instance ToJSON Value where
     toJSON (N _) = toJSON ()
