@@ -116,21 +116,19 @@ createReaction name reagentList catalistList productList = do
 
 getReactionById :: Int -> BoltActionT IO (Maybe Reaction)
 getReactionById id = do 
-    result <- head <$> queryP cypher params
-    if null result 
+    records <- queryP cypher params
+    if null records 
     then pure Nothing
     else do
+        let result = head records
         T name <- result `at` "name"
         L reagents'  <- result `at` "reagents"
         L products'  <- result `at` "products"
         L catalysts' <- result `at` "catalysts"
-        
         let reagents = map toMoleculeAndAmount reagents'
         let products = map toMoleculeAndAmount products'
         let catalysts = if (head catalysts') == (L [N (),N (),N (),N (),N ()]) then [] else map toCatalystAndAccelerate catalysts'
-    
         return $ Just (Reaction id (unpack name) reagents catalysts products)
-
     where 
         cypher = "MATCH (reaction) WHERE id(reaction)={id}" <>
                  "MATCH (reaction)<-[amount_in:REAGENT_IN]-(reagent:Molecule) " <>
@@ -143,31 +141,29 @@ getReactionById id = do
         params = fromList [("id", I id)]
 
 
-getShortestPath  :: BoltActionT IO ([(Int, Int)])
-getShortestPath = do
-    result <- head <$> queryP cypher params
-    L path <- result `at` "nodes"
-    liftIO $ putStrLn (show path)
-
-    let pairs = toPair (tail path) where
-        toPair :: [Value] -> [(Value, Value)]
-        toPair [] = []
-        toPair (a:b:xs) = [(a,b)] ++ (toPair xs)
-
-    reactions <- traverse toReaction (map fst pairs)
-    molecules <- traverse toMolecule (map snd pairs)
-
-    liftIO $ putStrLn (show molecules)
-    liftIO $ putStrLn (show reactions)
-    liftIO $ putStrLn (show $ zipWith (\r m -> (r_id r, m_id m) ) reactions molecules)
-
-    return $ zipWith (\r m -> (r_id r, m_id m) ) reactions molecules
+getShortestPath  :: String -> String -> BoltActionT IO [Int]
+getShortestPath smiles_start smiles_end = do
+    records <- queryP cypher params
+    if null records 
+    then pure []
+    else do
+      let result = head records
+      L path <- result `at` "nodes"
+      let pairs = toPair (tail path) where
+            toPair :: [Value] -> [(Value, Value)]
+            toPair [] = []
+            toPair (a:b:xs) = [(a,b)] ++ (toPair xs)
+      
+      reactions <- traverse toReaction (map fst pairs)
+      molecules <- traverse toMolecule (map snd pairs)
+      fstMol <- toMolecule $ head path  
+      return $ [m_id fstMol] ++ concat (zipWith (\r m -> [r_id r, m_id m] ) reactions molecules)
 
     where
         cypher = "MATCH (start:Molecule), (end:Molecule), path=shortestPath((start)-[*]->(end))" <> 
                  "WHERE start.smiles={start_smiles} and end.smiles={end_smiles}" <> 
                  "RETURN nodes(path) as nodes"
-        params = fromList [("start_smiles", T "C=C"), ("end_smiles", T "O")]      
+        params = fromList [("start_smiles", T $ pack smiles_start), ("end_smiles", T $ pack smiles_end)]      
     
 
 createDemo :: BoltActionT IO ()

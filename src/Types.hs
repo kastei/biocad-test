@@ -90,5 +90,3 @@ toReaction v = do node :: Node <- exact v
                   let identity = nodeIdentity node
                   name :: Text <- (props `at` "name") >>= exact
                   return $ Reaction identity (unpack name) [] [] [] 
-
-
