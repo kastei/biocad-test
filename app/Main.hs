@@ -35,39 +35,18 @@ runCommand pipe command argList
     | command == "createDemo" = do
             run pipe $ createDemo
             main
-            | command == "createReaction" = do
-{-        if argList == [] 
-        then putStrLn "For this request you need to enter the name of reaction, id's of reagents and products"
-        else do
-            let name = head argList
-            let rIdList = parseLine '>' $ argList !! 0
-            let caIdList = parseLine '>' $ argList !! 1
-            let pIdList = parseLine '>' $ argList !! 2
-            
-            putStrLn $ show rIdList
-            putStrLn $ show caIdList
-            putStrLn $ show pIdList
-            mr <- createReaction 
-                "dehydrogenation methane" 
-                [(Molecule 0 "C" "methane", 2)]
-                [(Catalyst 0 "OP(O)(O)=O" (Just "phosphoric acid"))]
-                [Accelerate 1400 100] 
-                [(Molecule 0 "[H]" "molecular hydrogen", 3), (Molecule 0 "C#C" "acetylene", 1)] 
-
-            case mr of 
-                Nothing         -> putStrLn $ "Error: could not insert the reaction"
-                Just reaction   -> putStrLn $ show reaction
--}
-            main
     | command == "getReactionById" = do
         if argList == [] 
         then putStrLn $ "For this request you need to enter the id of reaction"
         else do
             maybeReaction <- run pipe (getReactionById (read $ head argList) )
             case maybeReaction of 
-                Nothing         -> putStrLn $ "Reaction with id " ++ (head argList) ++ " was not found"
+                Nothing         -> putStrLn $ "Reaction with id " ++ (head argList) ++ " not found"
                 Just reaction   -> putStrLn $ show reaction
             main    
+    | command == "getShortestPath" = do
+            run pipe $ getShortestPath
+            main
     | otherwise = doesntExist command argList
 
 doesntExist :: String -> [String] -> IO()
