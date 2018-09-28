@@ -1,3 +1,4 @@
 .stack-work/
 biocad-test.cabal
+dist/
 *~
