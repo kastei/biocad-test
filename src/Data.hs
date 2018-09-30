@@ -143,21 +143,29 @@ getReactionById id = do
 
 getShortestPath  :: String -> String -> BoltActionT IO [Int]
 getShortestPath smiles_start smiles_end = do
-    records <- queryP cypher params
-    if null records 
-    then pure []
+    if (smiles_start == smiles_end) 
+    then do
+        liftIO $ putStrLn "The shortest path algorithm does not work when the start and end nodes are the same..." 
+        maybeMol <- getMoleculeBySMILES smiles_start
+        case maybeMol of
+            Nothing -> return $ []
+            Just m  -> return $ [m_id m]
     else do
-      let result = head records
-      L path <- result `at` "nodes"
-      let pairs = toPair (tail path) where
+      records <- queryP cypher params
+      if null records 
+      then pure []
+      else do
+        let result = head records
+        L path <- result `at` "nodes"
+        let pairs = toPair (tail path) where
             toPair :: [Value] -> [(Value, Value)]
             toPair [] = []
             toPair (a:b:xs) = [(a,b)] ++ (toPair xs)
       
-      reactions <- traverse toReaction (map fst pairs)
-      molecules <- traverse toMolecule (map snd pairs)
-      fstMol <- toMolecule $ head path  
-      return $ [m_id fstMol] ++ concat (zipWith (\r m -> [r_id r, m_id m] ) reactions molecules)
+        reactions <- traverse toReaction (map fst pairs)
+        molecules <- traverse toMolecule (map snd pairs)
+        fstMol <- toMolecule $ head path  
+        return $ [m_id fstMol] ++ concat (zipWith (\r m -> [r_id r, m_id m] ) reactions molecules)
 
     where
         cypher = "MATCH (start:Molecule), (end:Molecule), path=shortestPath((start)-[*]->(end))" <> 
@@ -165,6 +173,21 @@ getShortestPath smiles_start smiles_end = do
                  "RETURN nodes(path) as nodes"
         params = fromList [("start_smiles", T $ pack smiles_start), ("end_smiles", T $ pack smiles_end)]      
     
+
+
+getMoleculeBySMILES :: String -> BoltActionT IO (Maybe Molecule)
+getMoleculeBySMILES smiles = do 
+    records <- queryP cypher params
+    if null records 
+    then pure Nothing
+    else do
+        let result = head records
+        T name <- result `at` "name"
+        I m_id <- result `at` "id"
+        return $ Just (Molecule m_id smiles (unpack name))
+    where 
+        cypher = "MATCH (m:Molecule) WHERE m.smiles={smiles} RETURN id(m) as id, m.iupacName as name"
+        params = fromList [("smiles", T $ pack smiles)]
 
 createDemo :: BoltActionT IO ()
 createDemo = do
