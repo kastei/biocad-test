@@ -27,7 +27,6 @@ main :: IO ()
 main = run `catchError` failMsg
   where run = do config <- readConfig `catchError` const (return defaultConfig)
                  putStrLn $ "Enter command"
-                 line <- getLine
                  let (command : argList) = parseLine ' ' line
                  pipe <- connect config
                  runCommand pipe command argList
