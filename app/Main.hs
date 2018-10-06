@@ -7,6 +7,7 @@ import Data.Maybe
 import Control.Applicative  ((<$>))
 import System.Environment   (getEnv)
 import Control.Monad.Except (MonadIO, MonadError, catchError, liftIO)
+import Data.Text (Text, pack, unpack)
 
 import Data
 
@@ -15,11 +16,12 @@ import System.Environment
 import Database.Bolt
 
 defaultConfig :: BoltCfg
-defaultConfig = def {user = "neo4j", password = "neo4j"}
+defaultConfig = def {user = "neo4j", password = "neo4jneo4j", host = "localhost", port = 7687}
 
 -- docker run --publish=7474:7474 --publish=7687:7687 neo4j:3.0
 -- cmd
-    -- set GRAPHENEDB_BOLT_URL=localhost:7687
+    -- set GRAPHENEDB_BOLT_HOST=localhost
+    -- set GRAPHENEDB_BOLT_PORT=7687
     -- set GRAPHENEDB_BOLT_USER=neo4j
     -- set GRAPHENEDB_BOLT_PASSWORD=neo4j
      
@@ -33,12 +35,11 @@ main = run `catchError` failMsg
                  runCommand pipe command argList
                  close pipe
         readConfig = do
-          bolt <- getEnv "GRAPHENEDB_BOLT_URL"
-          user <- read <$> getEnv "GRAPHENEDB_BOLT_USER"
-          pass <- read <$> getEnv "GRAPHENEDB_BOLT_PASSWORD"
-          let (host, port) = let sp = last (elemIndices ':' bolt)
-                             in (take sp bolt, (read $ drop (sp+1) bolt):: Int)
-          return def { user = user, password = pass, host = host, port = port }
+            host <- read <$> getEnv "GRAPHENEDB_BOLT_HOST"
+            port <- read <$> getEnv "GRAPHENEDB_BOLT_PORT"
+            user <- read <$> getEnv "GRAPHENEDB_BOLT_USER"
+            pass <- read <$> getEnv "GRAPHENEDB_BOLT_PASSWORD"
+            return def { user = user, password = pass, host = host, port = port }
 
  
 runCommand :: Pipe -> String -> [String] -> IO()

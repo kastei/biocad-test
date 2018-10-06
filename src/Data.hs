@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data (createReaction, getReactionById, getShortestPath, createDemo) where 
+module Data (createReaction, getReactionById, getShortestPath, createDemo, idReaction) where 
 
 import Types
 
@@ -29,7 +29,7 @@ createReaction name reagentList catalistList productList = do
                 
         cypherText :: String -> [(Molecule, Double)] -> [(Maybe Catalyst, Accelerate)] -> [(Molecule, Double)] -> Text
         cypherText name reagentList catalistList productList = pack $ 
-          "MERGE (r:Reaction {name: {name}})" <> 
+          "CREATE (r:Reaction {name: {name}})" <> 
           cypherHeadReagent  <> 
           cypherHeadCatalist <> 
           cypherHeadProduct  <> 
@@ -111,7 +111,6 @@ createReaction name reagentList catalistList productList = do
                         (Just t,   Just p)      -> [(pack $ "t" <> i, F $ t), (pack $ "p" <> i, F $ p)]
                         (Nothing,  Just p)      -> [(pack $ "p" <> i, F $ p)]
                         (Just t,   Nothing)     -> [(pack $ "t" <> i, F $ t)]
-                
 
 
 getReactionById :: Int -> BoltActionT IO (Maybe Reaction)
@@ -125,14 +124,14 @@ getReactionById id = do
         L reagents'  <- result `at` "reagents"
         L products'  <- result `at` "products"
         L catalysts' <- result `at` "catalysts"
-        let reagents = map toMoleculeAndAmount reagents'
-        let products = map toMoleculeAndAmount products'
+        let reagents = if (head reagents') == (L [N (),N (),N (),N ()]) then [] else map toMoleculeAndAmount reagents'
+        let products = if (head products') == (L [N (),N (),N (),N ()]) then [] else map toMoleculeAndAmount products'
         let catalysts = if (head catalysts') == (L [N (),N (),N (),N (),N ()]) then [] else map toCatalystAndAccelerate catalysts'
         return $ Just (Reaction id (unpack name) reagents catalysts products)
     where 
         cypher = "MATCH (reaction) WHERE id(reaction)={id}" <>
-                 "MATCH (reaction)<-[amount_in:REAGENT_IN]-(reagent:Molecule) " <>
-                 "MATCH (reaction)-[amount_from:PRODUCT_FROM]->(product:Molecule) " <>
+                 "OPTIONAL MATCH (reaction)<-[amount_in:REAGENT_IN]-(reagent:Molecule) " <>
+                 "OPTIONAL MATCH (reaction)-[amount_from:PRODUCT_FROM]->(product:Molecule) " <>
                  "OPTIONAL MATCH (reaction)<-[accelerate:ACCELERATE]-(catalyst:Catalyst) " <>
                  "RETURN reaction.name as name," <>
                  "collect(DISTINCT [id(reagent),reagent.smiles,reagent.iupacName,amount_in.amount]) as reagents," <>
@@ -174,7 +173,6 @@ getShortestPath smiles_start smiles_end = do
         params = fromList [("start_smiles", T $ pack smiles_start), ("end_smiles", T $ pack smiles_end)]      
     
 
-
 getMoleculeBySMILES :: String -> BoltActionT IO (Maybe Molecule)
 getMoleculeBySMILES smiles = do 
     records <- queryP cypher params
@@ -189,6 +187,7 @@ getMoleculeBySMILES smiles = do
         cypher = "MATCH (m:Molecule) WHERE m.smiles={smiles} RETURN id(m) as id, m.iupacName as name"
         params = fromList [("smiles", T $ pack smiles)]
 
+        
 createDemo :: BoltActionT IO ()
 createDemo = do
         query "MATCH (n) DETACH DELETE n"
@@ -200,7 +199,7 @@ createDemo = do
             [(Molecule 0 "[H]" "molecular hydrogen", 3), (Molecule 0 "C#C" "acetylene", 1)]
         
         reaction <- getReactionById $(fromJust id)
-        liftIO $ putStrLn (fromMaybe "" (fmap show reaction))
+        liftIO $ putStrLn (fromMaybe "" (fmap show reaction)) 
 
         id <- createReaction 
             "2. dehydrogenation methane 2" 
@@ -266,4 +265,8 @@ createDemo = do
         reaction <- getReactionById $(fromJust id)
         liftIO $ putStrLn (fromMaybe "" (fmap show reaction))
     
+        liftIO $ putStrLn ""
         return ()
+
+idReaction :: Reaction -> Int
+idReaction = r_id
