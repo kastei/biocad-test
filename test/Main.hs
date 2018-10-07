@@ -9,7 +9,7 @@ import Control.Monad.Except (liftIO)
 import Data
 
 config :: BoltCfg
-config = def {user = "neo4j", password = "neo4jneo4j"}
+config = def {user = "neo4j", password = "neo4j"}
 
 main :: IO Counts
 main = runTestTT $ TestList [testCase1, testCase2, testCase3, testCase4, testCase5]

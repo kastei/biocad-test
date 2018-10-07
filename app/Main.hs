@@ -16,7 +16,7 @@ import System.Environment
 import Database.Bolt
 
 defaultConfig :: BoltCfg
-defaultConfig = def {user = "neo4j", password = "neo4jneo4j", host = "localhost", port = 7687}
+defaultConfig = def {user = "neo4j", password = "neo4j", host = "localhost", port = 7687}
 
 -- docker run --publish=7474:7474 --publish=7687:7687 neo4j:3.0
 -- cmd
